@@ -8,25 +8,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
-#CONSTANTES 
-PI = math.pi
-A = 5 * 10**(-8)
-E = 1e-7
-
-# DEFINIÇÃO DAS VARIAVEIS 
-n = 201
-val_min = - 0.03
-val_max = 0.03
-
-
-p_L = 0.000003
-Er = 2.3
-ro = 3.0
-p = [0.018 , 0]
-
-# OBS: O número infinitesimal 1e-15 foi adicionado nos denominadores para evitar mensagens de erro por divisão por 0
-
 # DEFINIÇÃO DA MALHA
 def Malha_2D(val_min, val_max, n):
     x = np.linspace(val_min, val_max, n) # Vetor unidimensional de x
@@ -37,17 +18,19 @@ def Malha_2D(val_min, val_max, n):
     # DEFINIÇÃO DO PASSO A SER DADO ENTRE CADA PONTO DA MALHA
     delta_x = (val_max - val_min)/(n - 1)
     delta_y = (val_max - val_min)/(n - 1)
+
     return X, Y, delta_x, delta_y
 
-#CALCULO DA DENSIDADE
+#CALCULO DA DENSIDADE (implementa a formula fornecida na questão)
 def Densidade(x,y,x0):
     Dx = (p_L/(2*PI)) * (x/(x**2 + y**2 + E)) + A * ((x - x0)/((x-x0)**2 + y**2 + E))
     Dy = (p_L/(2*PI)) * (y/(x**2 + y**2 + E)) + A * ((y)/((x-x0)**2 + y**2 + E))
+
     return Dx,Dy
 
 #CALCULO DA DIVERGÊNCIA NUMERICAMENTE
 def Divergencia_numerica (Dx, Dy, delta_x, delta_y):
-    # Tamanho da malha
+    # Tamanho da malha para o laço
     Nx = len(Dx)        
     Ny = len(Dx[0])
 
@@ -180,6 +163,20 @@ def plot_graficos(X, Y, ro_n, ro_a, Dx, Dy):
     
 
 def main():
+    #CONSTANTES 
+    PI = math.pi
+    A = 5 * 10**(-8)
+    E = 1e-7 # Adicionado para melhorar a exibição do gráfico e diminuição de erros
+
+    # DEFINIÇÃO DAS VARIAVEIS 
+    n = 201
+    val_min = - 0.03
+    val_max = 0.03
+    p_L = 0.000003
+    Er = 2.3
+    ro = 3.0
+    p = [0.018 , 0]
+
     X, Y, delta_x, delta_y = Malha_2D(val_min, val_max, n)
     Dx, Dy = Densidade(X, Y, p[0])
     ro_n = Divergencia_numerica(Dx, Dy, delta_x, delta_y)
