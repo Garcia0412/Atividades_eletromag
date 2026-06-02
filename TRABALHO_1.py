@@ -61,24 +61,12 @@ def Divergencia_numerica (Dx, Dy, delta_x, delta_y):
 
 #CALCULO DO RÔ ANALITICAMENTE 
 def Divergência_analitica(X, Y, x0):
-    # Tamanho da malha
-    Nx = len(X)        
-    Ny = len(X[0])
 
-    ro_a = [[0.0 for _ in range(Ny)] for _ in range(Nx)] # Cria a matriz que vai guardar o rô calculado númericamente
+    # O numpy usa a fórmula abaixo para realizar o calculo para cada termo da matriz
+    dx = (p_L/(2*PI)) * ((Y**2 - X**2 + E)/(Y**2 + X**2 + E)**2) + A*((Y**2-(X-x0)**2 + E)/((X-x0)**2 + Y**2 + E)**2)
+    dy = (p_L/(2*PI)) * ((X**2 - Y**2 + E)/(Y**2 + X**2 + E)**2) + A*(((X-x0)**2-Y**2 + E)/((X-x0)**2 + Y**2 + E)**2)
+    ro_a = dx + dy
 
-    # Laço que percorre a malha
-    for i in range(Nx):
-        for j in range(Ny):
-            
-            x = X[i][j]
-            y = Y[i][j]
-
-            # Componentes do divergente já calculados
-            dx = (p_L/(2*PI)) * ((y**2 - x**2 + E)/(y**2 + x**2 + E)**2) + A*((y**2-(x-x0)**2 + E)/((x-x0)**2 + y**2 + E)**2)
-            dy = (p_L/(2*PI)) * ((x**2 - y**2 + E)/(y**2 + x**2 + E)**2) + A*(((x-x0)**2-y**2 + E)/((x-x0)**2 + y**2 + E)**2)
-
-            ro_a[i][j] = dx + dy
     return ro_a
 
 def plot_graficos(X, Y, ro_n, ro_a, Dx, Dy):
@@ -95,14 +83,14 @@ def plot_graficos(X, Y, ro_n, ro_a, Dx, Dy):
     raio = np.sqrt(X**2 + Y**2)
     mascara_fora = (raio < 0.01) | (raio > 0.03) # Delimita a área de centro do condutor 
 
-    # Exclui a área do centro do condutor para a plotagem  deixar o isolante mais visível 
+    # Exclui a área do centro do condutor para a plotagem deixar o isolante mais visível 
     ro_n[mascara_fora] = np.nan
     ro_a[mascara_fora] = np.nan
     Dx[mascara_fora] = np.nan
     Dy[mascara_fora] = np.nan
 
     #VISUALIZAÇÃO DO GRÁFICO DE CAMPO VETORIAL
-    plt.figure(figsize=(8, 8)) 
+    plt.figure(figsize=(8, 8)) # Define o tamanho do gráfico
     p = 10 # Passo pra definir amostragem e evitar que as setas fiquem "invisíveis" pela grande quantidade de pontos
 
     # Fatiamento das matrizes
@@ -112,63 +100,60 @@ def plot_graficos(X, Y, ro_n, ro_a, Dx, Dy):
     Dy_q = Dy[::p, ::p]
 
     
-    modulo = np.sqrt(Dx_q**2 + Dy_q**2) # Transformação dos vetores em vetores unitários
+    modulo = np.sqrt(Dx_q**2 + Dy_q**2) # Obtém o módulo do vetor
     modulo[modulo == 0] = 1e-15 # Impede a divisão por zero
 
     # Transforma o vetor em unitário
     Dx_norm = Dx_q / modulo
     Dy_norm = Dy_q / modulo
 
-    plt.quiver(X_q, Y_q, Dx_norm, Dy_norm, color='teal', pivot='mid')
+    plt.quiver(X_q, Y_q, Dx_norm, Dy_norm, color='teal', pivot='mid') # Recebe os valores para gerar o gráfico
+    plt.title('G1: Campo Vetorial da Densidade de Fluxo Elétrico (D)') # Gera o título do gráfico
+    plt.xlabel('Eixo X (m)') # Eixo x
+    plt.ylabel('Eixo Y (m)') # Eixo y
+    plt.xlim(val_min, val_max) # Limites do eixo x
+    plt.ylim(val_min, val_max) # Limites do eixo y
+    plt.savefig(f'{pasta_destino}/Campo Vetorial da Densidade de Fluxo Elétrico (D).png', dpi=300, bbox_inches='tight') # Salva o gráfico na pasta escolhida para apresentar na interface
 
-    plt.title('G1: Campo Vetorial da Densidade de Fluxo Elétrico (D)')
-    plt.xlabel('Eixo X (m)')
-    plt.ylabel('Eixo Y (m)')
-    plt.xlim(val_min, val_max)
-    plt.ylim(val_min, val_max)
-    #plt.show()
-    plt.savefig(f'{pasta_destino}/Campo Vetorial da Densidade de Fluxo Elétrico (D).png', dpi=300, bbox_inches='tight')
-
-    #VISUALIZAÇÃO DO GRÁFICO DENSIDADE DE CARGA NUMÉRICA
-    plt.figure(figsize=(8, 6))
-    plt.contourf(X, Y, ro_n, levels=50, cmap='inferno')
-    plt.colorbar(label='Densidade de Carga Numérica')
+    #VISUALIZAÇÃO DO GRÁFICO DENSIDADE DE CARGA NUMÉRICA (Tirando o que foi comentado a abixo, tds os outros seguem a mesma funcionalidade do de cima)
+    plt.figure(figsize=(8, 8))
+    plt.contourf(X, Y, ro_n, levels=50, cmap='inferno') # Recebe os valores para gerar o gráfico
+    plt.colorbar(label='Densidade de Carga Numérica') # Define a barra de cor
     plt.title('G2: Mapa de Calor - Divergente de D (Numérico)')
     plt.xlabel('Eixo X (m)')
     plt.ylabel('Eixo Y (m)')
-    #plt.show()
     plt.savefig(f'{pasta_destino}/Mapa de Calor - Divergente de D (Numérico).png', dpi=300, bbox_inches='tight')
 
     #VISUALIZAÇÃO DO GRÁFICO DENSIDADE DE CARGA ANALÍTICA
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(8, 8))
     plt.contourf(X, Y, ro_a, levels=50, cmap='inferno')
     plt.colorbar(label='Densidade de Carga analítica')
     plt.title('G3: Mapa de Calor - Divergente de D (Analítico)')
     plt.xlabel('Eixo X (m)')
     plt.ylabel('Eixo Y (m)')
-    #plt.show()
     plt.savefig(f'{pasta_destino}/Mapa de Calor - Divergente de D (Analítico).png', dpi=300, bbox_inches='tight')
 
     #VISUALIZAÇÃO DO GRÁFICO DE ERRO ABSOLUTO
     erro_absoluto = np.abs(np.array(ro_n) - np.array(ro_a))
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(8, 8))
     plt.contourf(X, Y, erro_absoluto, levels=50, cmap='inferno')
     plt.colorbar(label='Erro absoluto')
     plt.title('G4: Mapa de Calor - Erro absoluto')
     plt.xlabel('Eixo X (m)')
     plt.ylabel('Eixo Y (m)')
-    #plt.show()
     plt.savefig(f'{pasta_destino}/Mapa de Calor - Erro absoluto.png', dpi=300, bbox_inches='tight')
 
     
 
-def main():
-    #CONSTANTES 
+def main(): 
+    global PI, A, E, val_min, val_max, p_L, Er, ro # Só para facilitar a visualização e não ter que colocar muitos parametros nas funções
+
+    #CONSTANTES
     PI = math.pi
     A = 5 * 10**(-8)
     E = 1e-7 # Adicionado para melhorar a exibição do gráfico e diminuição de erros
 
-    # DEFINIÇÃO DAS VARIAVEIS 
+    #DEFINIÇÃO DAS VARIAVEIS 
     n = 201
     val_min = - 0.03
     val_max = 0.03
@@ -177,13 +162,14 @@ def main():
     ro = 3.0
     p = [0.018 , 0]
 
+    #CHAMA AS FUNÇÕES DECLARADAS ACIMA
+
     X, Y, delta_x, delta_y = Malha_2D(val_min, val_max, n)
     Dx, Dy = Densidade(X, Y, p[0])
     ro_n = Divergencia_numerica(Dx, Dy, delta_x, delta_y)
     ro_a = Divergência_analitica(X, Y, p[0])
     
     #PLOTANDO OS GRÁFICOS SOLICITADOS
-    print("Calculo concluído! Gerando gráfico...")
     plot_graficos(X, Y, ro_n, ro_a, Dx, Dy)
     
     
