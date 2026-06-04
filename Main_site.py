@@ -1,6 +1,6 @@
 import streamlit as st
 from pathlib import Path
-from TRABALHO_1 import main
+from T1_EM_LUCAS_VINICIUS import main
 from Header import Header
 
 #CONFIGURAÇÃO DA PÁGINA
