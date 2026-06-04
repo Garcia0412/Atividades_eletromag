@@ -1,0 +1,6 @@
+Trabalho 1 eletromagnetismo 
+
+Links para o site e o repositório do GitHub:
+
+Link do site criado: https://atividadeseletromag.streamlit.app/
+Link para o repositório do GitHub: https://github.com/Garcia0412/Atividades_eletromag.git
