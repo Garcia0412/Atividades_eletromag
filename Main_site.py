@@ -24,8 +24,8 @@ GRAFICOS = BASE_DIR / "Resultados_Graficos"
 #MENU DE BARRA LATERAL
 st.sidebar.title("Navegação")
 secao = st.sidebar.selectbox(
-    "Ir para:",
-    ["O projeto", "Resultados Finais", "Conclusões"]
+    "Menu:",
+    ["O projeto", "Falha no dielétrico", "Capacitância"]
 )
 
 #RENDERIZAÇÃO DAS ABAS
@@ -35,11 +35,11 @@ if secao == "O projeto":
 
     # Texto da Aba
     st.markdown("""<p style="text-indent: 50px; text-align: justify;">Diariamente, no ambiente de engenharia, é extremamente comum nos deparamos com a necessidade de modelar e analizar objetos reais por meio de ferramentas computacionais como, por exemplo, o Python. 
-                Por isso, como forma de expandir os conhecimentos e estabelecer uma relação de interdiciplinaridade, foi proposto aos estudantes de engenharia elétrica e engenharia de telecomunicações uma atividade envolvendo a Primeira Lei de Mawxell, também conhecida como Lei de Gauss na forma diferencial, de maneira que ela seja aplicada na verificação de falhas em objetos encontrados em uma situação cotidiana.</p>""", unsafe_allow_html=True)
+                Por isso, como forma de expandir os conhecimentos e estabelecer uma relação de interdiciplinaridade, foi proposto aos estudantes de engenharia elétrica e engenharia de telecomunicações a elaboração e execução de trabalhos relacionando a modelagem computacional com conhecimentos em eletromagnetismo.</p>""", unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True) # Usado para gerar espaço entre os textos
 
-    st.markdown("""<p style="text-indent: 50px; text-align: justify;">Para realizar tal atividade, decidimos pela opção do cabo coaxial com dielétrico rompido devido ao uso, e assim, prosseguimos com a atividade seguindo os passos a passos indicados no roteiro, partindo da elaboração do código que permite calcular o divergente utilizando diferenças centradas e unilaterais e finalizando em uma interface web que usamos para apresentar os resultados obtidos. Abaixo segue uma ilustração de um cabo coaxial com blindagem</p>""", unsafe_allow_html=True)
+    st.markdown("""<p style="text-indent: 50px; text-align: justify;">Para tal, decidimos elaborar uma interface web que contenha os três trabalhos realizados em sob a geometria e propriedades de um dos objetos mais comuns e utilizados na engenharia, o cabo axial. </p>""", unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True) # Usado para gerar espaço entre os textos
 
@@ -54,15 +54,18 @@ if secao == "O projeto":
 
     st.markdown("<br>", unsafe_allow_html=True) # Usado para gerar espaço entre os textos
 
-    st.markdown("""<p style="text-indent: 50px; text-align: justify;">Nas proximas abas de navegação contidas na side bar apresentaremos os gráficos obtidos e as conclusões que obtivemos após a realização dessa simulação.</p>""", unsafe_allow_html=True)
+    st.markdown("""<p style="text-indent: 50px; text-align: justify;">Esse tipo de cabo está presente em diversos contextos do dia a dia das pessoas, como nas televisões, aparelhos de internet e sistemas de segurança, devido a isso, é fundamental a um futuro engenheiro o estudo e análise de como essa estrutura funciona, e possíveis falhas que podem ocorrer durante seu funcionamento, podendo assim, trabalhar com soluções antecipadamente.</p>""", unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True) # Usado para gerar espaço entre os textos
 
-elif secao == "Resultados Finais":
-    st.header("Resultados Gráficos") # Titulo da aba
+    st.markdown("""<p style="text-indent: 50px; text-align: justify;">No painel lateral encontram-se as abas de navegação da interface, sendo trabalhado em cada uma um aspecto do cabo que um engenheiro deve se atentar na hora de criar o seu projeto. </p>""", unsafe_allow_html=True)
+
+elif secao == "Falha no dielétrico":
+    st.header("Estudo do dielétrico do cabo coaxial") # Titulo da aba
 
     # Texto da aba
-    st.markdown("""<p style="text-indent: 50px; text-align: justify;">Após a criação e execução do código, os resultados da modelagem foram agrupados em gráficos, sendo divididos em 2 tipos, campos vetoriais e mapas de calor, conforme solicitado em roteiro.
-                O primeiro deles é o de campos vetoriais sob o isolante de revestimento do cabo. O segundo e o terceiro estão os dados obtidos por meio dos calculos dos divergentes, sendo o primeiro analiticamente e o segundo numericamente. Por fim, o ultimo deles representa o erro entre os dois calculos de divergente.
-                A seguir estão os gráficos descritos acima. </p> """, unsafe_allow_html=True)
+    st.markdown("""<p style="text-indent: 50px; text-align: justify;">Uma das maiores caracteristicas do cabo coaxial é a sua alta blindagem contra ondas eletromagnéticas do ambiente, contudo, com o passar dos anos e desgastes ocorridos por condições adversas o dielétrico desses cabos pode apresentar falhas e isso pode ocasionar problemas na sua aplicação. 
+                Devido a isso, foi-se elaborado um progrma que utiliza os dados fornecidos pelo professor, mapeia e plota em forma de 4 gráficos os resultados do que seria um estudo em campo do teste da integridade do dielétrico de um cabo coaxial.</p> """, unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True) # Usado para gerar espaço entre os textos
 
@@ -89,8 +92,7 @@ elif secao == "Resultados Finais":
         st.image(GRAFICOS / "Mapa de Calor - Erro absoluto.png")
         st.markdown("<p style='text-align: center;'>FONTE: Autoria própria (2026)</p>", unsafe_allow_html=True)
 
-elif secao == "Conclusões":
-    st.header("Conclusões") # Titulo da aba
+elif secao == "Capacitância":
+    st.header("Estudo da capacitância do cabo coaxial") # Titulo da aba
     # Texto da aba
-    st.markdown("""<p style="text-indent: 50px; text-align: justify;">Por fim, concluimos que, fisicamente, a simulação representa a região do dielétrico de um cabo coaxial, localizada entre o raio interno de 0.01 metros e o raio externo de 0.03 metros. A lei de Gauss na forma diferencial estabelece que o divergente da densidade de fluxo elétrico é igual à densidade volumétrica de carga. Em um cabo coaxial ideal e sem defeitos, não há cargas livres na região isolante, logo, a densidade de carga deveria ser zero em toda essa área. No entanto, as imagens revelam uma anomalia localizada exatamente nas coordenadas x igual a 0.018 e y igual a zero. Fisicamente, essa anomalia representa uma impureza, um defeito pontual no dielétrico ou uma carga espúria aprisionada, atuando como uma fonte pontual secundária de campo elétrico dentro do material isolante.</p>""", unsafe_allow_html=True)
-    st.markdown("""<p style="text-indent: 50px; text-align: justify;">Atingindo dessa forma, exatamente o que se pretendia com a simulação dessa superfície de dielétrico, a comprovação de que existia um defeito sob a superfície do dielétrico que permitia um acúmulo irregular de cargas em sua superfície, e assim comprovando a eficiência dos conhecimentos aprendidos em sala de aula no dia a dia de um engenheiro eletricista ou engenheiro eletrônico.</p>""", unsafe_allow_html=True)
+    st.markdown("""<p style="text-indent: 50px; text-align: justify;"> </p>""", unsafe_allow_html=True)
