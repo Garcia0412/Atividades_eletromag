@@ -1,6 +1,7 @@
 import streamlit as st
 from pathlib import Path
 from T1_EM_LUCAS_VINICIUS import main
+from T2_EM_LUCAS_VINICIUS import main
 from Header import Header
 
 #CONFIGURAÇÃO DA PÁGINA
@@ -95,4 +96,28 @@ elif secao == "Falha no dielétrico":
 elif secao == "Capacitância":
     st.header("Estudo da capacitância do cabo coaxial") # Titulo da aba
     # Texto da aba
-    st.markdown("""<p style="text-indent: 50px; text-align: justify;"> </p>""", unsafe_allow_html=True)
+    st.markdown("""<p style="text-indent: 50px; text-align: justify;">Ainda nos estudos sobre cabos coaxiais, desta vez o foco foi nos efeitos capacitivos dos cabos, quando submetidos ao desgaste do tempo ou de condições adversas de uso.
+                As imagens abaixo são os resultados das modelagens da situação problema apresentada pelo professor.</p>""", unsafe_allow_html=True)
+    
+    Colu1, Colu2, = st.columns(2) # Cria colunas para poder colocar cada imagem lado a lado
+    # Cada with define o que vai estar contido dentro de cada coluna 
+    with Colu1: 
+        st.markdown("<p style='text-align: center;'>Imagem 1: Distribuição Vetorial do Campo D</p>", unsafe_allow_html=True) # Titulo da imagem
+        st.image(GRAFICOS / "Distribuição Vetorial do Campo D.png") # Mostra a imagem
+        st.markdown("<p style='text-align: center;'>FONTE: Autoria própria (2026)</p>", unsafe_allow_html=True) # Fonte da imagem 
+    with Colu2:
+        st.markdown("<p style='text-align: center;'>Imagem 2: Validação da Densidade de Carga Superficial na Interface</p>", unsafe_allow_html=True)
+        st.image(GRAFICOS / "Validação da Densidade de Carga Superficial na Interface.png")
+        st.markdown("<p style='text-align: center;'>FONTE: Autoria própria (2026)</p>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True) # Usado para gerar espaço entre os textos
+
+    Colu3, Colu4 = st.columns(2)
+    with Colu3:
+        st.markdown("<p style='text-align: center;'>Imagem 3: Continuidade da Componente Tangencial</p>", unsafe_allow_html=True)
+        st.image(GRAFICOS / "Continuidade da Componente Tangencial.png")
+        st.markdown("<p style='text-align: center;'>FONTE: Autoria própria (2026)</p>", unsafe_allow_html=True)
+    with Colu4:
+        st.markdown("<p style='text-align: center;'>Imagem 4: Mapa de Calor - Erro absoluto</p>", unsafe_allow_html=True)
+        st.image(GRAFICOS / "Mapa de Calor - Erro absoluto_2.png")
+        st.markdown("<p style='text-align: center;'>FONTE: Autoria própria (2026)</p>", unsafe_allow_html=True)

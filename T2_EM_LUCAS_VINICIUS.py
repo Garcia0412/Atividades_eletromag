@@ -3,123 +3,234 @@
 
 # IMPORTAÇÃO DAS BIBLIOTECAS
 import os
-import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-# VALORES FORNECIDOS
-
-
-e_r1 = 2.3
-e_r2 = 3.0
-
-
 
 # DEFINIÇÃO DA MALHA
-def Malha_2D(val_min, val_max, n):
+def Malhas_2D(val_min, val_max, n, L):
+    # LIMITES DOS MEIOS DO DIELÉTRICO PASSADOS POR LISTA
+    a = L[0] # Condutor
+    c = L[1] # Região 1
+    b = L[2] # Região 2
+
     x = np.linspace(val_min, val_max, n) # Vetor unidimensional de x
     y = np.linspace(val_min, val_max, n) # Vetor unidimensional de y
 
     X,Y = np.meshgrid(x, y, indexing='ij') # Matriz de coordenadas (malha espacial)
 
-    # DEFINIÇÃO DO PASSO A SER DADO ENTRE CADA PONTO DA MALHA
-    delta_x = (val_max - val_min)/(n - 1)
-    delta_y = (val_max - val_min)/(n - 1)
+    # DEFINIÇÃO DO RAIO
+    R = np.sqrt(X**2 + Y**2)
 
-    return X, Y, delta_x, delta_y
+    # DEFINIÇÃO DA MALHA DE ÂNGULOS
+    phi = np.linspace(0, 2 * np.pi, 500)
+
+    # DEFINIÇÃO DAS MÁSCARAS PARA CADA REGIÃO
+    regiao_1 = (R >= a) & (R <= c)
+    regiao_2 = (R > c) & (R <= b)
+    descarte = (R < a) | (R > b)
+    reg = [descarte, regiao_1, regiao_2 ]
+
+
+    return X, Y, reg, phi
 
 # CALCULOS DAS DENSIDADES PARA CADA INTERFACE
-def Densidade_XLPE ( X, Y, p):
-    B = 0.00000003
-    ro_L = 0.000004
-    PI = math.pi
-    Dx = ((ro_L)/(2*PI)) * (X/(X**2 + Y**2)) + B * ((X-p[0])/((X-p[0])**2 + Y**2))
-    Dy = ((ro_L)/(2*PI)) * (Y/(X**2 + Y**2)) + B * (Y/((X-p[0])**2 + Y**2))
+def Densidade ( X, Y, p, reg):
+    B = 3.0e-8
+    ro_L = 4.0e-6
+    PI = np.pi
+
+    # CRIAÇÃO DE UMA MATRIZ VAZIA
+    Dx = np.zeros_like(X)
+    Dy = np.zeros_like(Y)
+
+    # OPERAÇÃO NORMAL
+    num_n = ((ro_L)/(2*PI))
+    den_n = (X**2 + Y**2)
+
+    Dx_n = num_n * (X/den_n)
+    Dy_n = num_n * (Y/den_n)
+
+    # OPERAÇÃO ANÔMALA
+    den_a = ((X - p[0])**2 + (Y - p[1])**2)
+
+    # REGIÃO 1
+    Dx[reg[1]] = Dx_n[reg[1]] + B * ((X[reg[1]] - p[0]) / (den_a[reg[1]]))
+    Dy[reg[1]] = Dy_n[reg[1]] + B * ((Y[reg[1]] - p[1]) / (den_a[reg[1]]))
+
+    # REGIÃO 2
+    Dx[reg[2]] = Dx_n[reg[2]] - B * ((X[reg[2]] - p[0]) / (den_a[reg[2]]))
+    Dy[reg[2]] = Dy_n[reg[2]] - B * ((Y[reg[2]] - p[1]) / (den_a[reg[2]]))
+
+    # REGIÃO DESCARTE
+    Dx[reg[0]] = np.nan
+    Dy[reg[0]] = np.nan
 
     return Dx, Dy
 
-def Densidade_EPR ( X, Y, p):
-    B = 0.00000003
-    ro_L = 0.000004
-    PI = math.pi
-    Dx = ((ro_L)/(2*PI)) * (X/(X**2 + Y**2)) - B * ((X-p[0])/((X-p[0])**2 + Y**2))
-    Dy = ((ro_L)/(2*PI)) * (Y/(X**2 + Y**2)) - B * (Y/((X-p[0])**2 + Y**2))
+def cond_fronteira (Dx, Dy, L, phi, n):
 
-    return Dx, Dy
+    e_1 = 2.3 * 8.854e-12
+    e_2 = 3.0 * 8.854e-12
+
+    c = L[1] 
+    b = L[2] 
+
+    # AJUSTES DE PASSO DA COORDENADA PARA DETERMINAR AS CONDIÇÕES DE FRONTEIRA
+    passo = (2 * b)/(n - 1)
+
+    # PONTOS ADJACENTES ANTERIORES A INTERFACE COM ANOMALIA
+    r_1 = c - passo
+    x_1 = r_1 * np.cos(phi)
+    y_1 = r_1 * np.sin(phi)
+
+    # CONVERSÃO EM ÍNDICES
+    idx_x1 = np.round((x_1 - (-b)) / passo).astype(int)
+    idx_y1 = np.round((y_1 - (-b)) / passo).astype(int)
+
+    # PONTOS ADJACENTES POSTERIORES A INTERFACE COM ANOMALIA
+    r_2 = c + passo
+    x_2 = r_2 * np.cos(phi)
+    y_2 = r_2 * np.sin(phi)
+
+    # CONVERSÃO EM ÍNDICES
+    idx_x2 = np.round((x_2 - (-b)) / passo).astype(int)
+    idx_y2 = np.round((y_2 - (-b)) / passo).astype(int)
+
+    # EXTRAÇÃO DAS MATRIZES
+    Dx_1 = Dx[idx_x1, idx_y1]
+    Dy_1 = Dy[idx_x1, idx_y1]
+
+    Dx_2 = Dx[idx_x2, idx_y2]
+    Dy_2 = Dy[idx_x2, idx_y2]
+
+    # CALCULO DAS COMPONENTES NORMAIS E TANGENCIAIS
+    Dn_1 = Dx_1 * np.cos(phi) + Dy_1 * np.sin(phi)
+    Dn_2 = Dx_2 * np.cos(phi) + Dy_2 * np.sin(phi)
+    rho_s = Dn_1 - Dn_2
+    Dn = [Dn_1, Dn_2, rho_s]
+
+    Dt_1 = -Dx_1 * np.sin(phi) + Dy_1 * np.cos(phi)
+    Dt_2 = -Dx_2 * np.sin(phi) + Dy_2 * np.cos(phi)
+    Dt = [Dt_1, Dt_2]
+
+    Et_1 = Dt_1 / e_1
+    Et_2 = Dt_2 / e_2
+    salto_Et = Et_1 - Et_2
+    Et = [Et_1, Et_2, salto_Et]
+
+    return Dn, Dt, Et    
+
+def Calculo_analitico (phi, p):
+    B = 3.0e-8
+    c = 0.02
+
+    x0 = p[0]
+    y0 = p[1]
+    x = c * np.cos(phi)
+    y = c * np.sin(phi)
 
 
-def plot_graficos(X, Y, ro_n, ro_a, Dx, Dy):
+    denominador = (x - x0)**2 + (y - y0)**2
+    Dx_anomalia = B * (x - x0) / denominador
+    Dy_anomalia = B * (y - y0) / denominador 
+    rho_a = 2 * (Dx_anomalia * np.cos(phi) + Dy_anomalia * np.sin(phi))
+
+    return rho_a
+
+
+def plot_graficos(X, Y, phi, L, Dx, Dy, Dn, Dt, Et, rho_a):
+    
+    # EXTRAINDO OS DADOS
+    erro_abs = np.abs(Dn[2] - rho_a)
+    phi_graus = np.degrees(phi)
+    a = L[0] 
+    c = L[1] 
+    b = L[2] 
 
     # DEFININDO UM PATH PARA ALOCAR AS IMAGENS DOS GRÁFICOS E CRIANDO A PASTA
     pasta_destino = 'Resultados_Graficos'
     if not os.path.exists(pasta_destino): # Confere se a pasta não existe
         os.makedirs(pasta_destino) # Cria a pasta se não existir
 
-    # Transforma as listas em arrays do numpy para facilitar a manipulação
-    ro_a = np.array(ro_a)
-    ro_n = np.array(ro_n)
 
-    """ 
-    raio = np.sqrt(X**2 + Y**2)
-    mascara_fora = (raio < 0.01) | (raio > 0.03) # Delimita a área de centro do condutor 
-
-    # Exclui a área do centro do condutor para a plotagem deixar o isolante mais visível 
-    ro_n[mascara_fora] = np.nan
-    ro_a[mascara_fora] = np.nan
-    Dx[mascara_fora] = np.nan
-    Dy[mascara_fora] = np.nan
-    """
-
-    #VISUALIZAÇÃO DO GRÁFICO DE CAMPO VETORIAL
+    # VISUALIZAÇÃO DO GRÁFICO DE CAMPO VETORIAL
     plt.figure(figsize=(8, 8)) # Define o tamanho do gráfico
     p = 10 # Passo pra definir amostragem e evitar que as setas fiquem "invisíveis" pela grande quantidade de pontos
 
-    # Fatiamento das matrizes
+    # FATIAMENTO DAS MATRIZES
     X_q = X[::p, ::p]
     Y_q = Y[::p, ::p]
     Dx_q = Dx[::p, ::p]
     Dy_q = Dy[::p, ::p]
 
-    
-    modulo = np.sqrt(Dx_q**2 + Dy_q**2) # Obtém o módulo do vetor
-    modulo[modulo == 0] = 1e-15 # Impede a divisão por zero
 
-    # Transforma o vetor em unitário
-    Dx_norm = Dx_q / modulo
-    Dy_norm = Dy_q / modulo
+    # DETERMINAÇÃO DAS BORDAS DAS SUPERFÍCIES 
+    condu = plt.Circle((0,0), a, color='black', fill=False, linestyle='--', label='Condutor Interno (r=a)')
+    diele = plt.Circle((0,0), c, color='red', fill=False, linewidth=2, label='Dielétrico (r=c)')
+    blind = plt.Circle((0,0), b, color='black', fill=False, linestyle='--', label='Blindagem (r=b)')
 
-    plt.quiver(X_q, Y_q, Dx_norm, Dy_norm, color='teal', pivot='mid') # Recebe os valores para gerar o gráfico
-    plt.title('G1: Campo Vetorial da Densidade de Fluxo Elétrico (D)') # Gera o título do gráfico
+    plt.quiver(X_q, Y_q, Dx_q, Dy_q, color='blue', scale=5e-4, width=0.003) # Recebe os valores para gerar o gráfico
+
+    # ADICIONANDO AS BORDAS
+    plt.gca().add_patch(condu)
+    plt.gca().add_patch(diele)
+    plt.gca().add_patch(blind)
+
+
+    plt.title('G1: Distribuição Vetorial do Campo D') # Gera o título do gráfico
     plt.xlabel('Eixo X (m)') # Eixo x
     plt.ylabel('Eixo Y (m)') # Eixo y
-    plt.xlim(val_min, val_max) # Limites do eixo x
-    plt.ylim(val_min, val_max) # Limites do eixo y
-    plt.savefig(f'{pasta_destino}/Campo Vetorial da Densidade de Fluxo Elétrico (D).png', dpi=300, bbox_inches='tight') # Salva o gráfico na pasta escolhida para apresentar na interface
+    plt.xlim(-b*1.1, b*1.1) # Limites do eixo x
+    plt.ylim(-b*1.1, b*1.1) # Limites do eixo y
+    plt.legend(loc='upper right')
+    plt.grid(True, linestyle=':')
+    plt.savefig(f'{pasta_destino}/Distribuição Vetorial do Campo D.png', dpi=300, bbox_inches='tight') # Salva o gráfico na pasta escolhida para apresentar na interface
 
     #VISUALIZAÇÃO DO GRÁFICO DENSIDADE DE CARGA NUMÉRICA (Tirando o que foi comentado a abixo, tds os outros seguem a mesma funcionalidade do de cima)
-    plt.figure(figsize=(8, 8))
-    plt.contourf(X, Y, ro_n, levels=50, cmap='inferno') # Recebe os valores para gerar o gráfico
-    plt.colorbar(label='Densidade de Carga Numérica') # Define a barra de cor
-    plt.title('G2: Mapa de Calor - Divergente de D (Numérico)')
-    plt.xlabel('Eixo X (m)')
-    plt.ylabel('Eixo Y (m)')
-    plt.savefig(f'{pasta_destino}/Mapa de Calor - Divergente de D (Numérico).png', dpi=300, bbox_inches='tight')
+    plt.figure(figsize=(10, 5))
+    plt.plot(phi_graus, Dn[2], 'b-', linewidth=3, label=r'Numérico ($\Delta D_n$)')
+    plt.plot(phi_graus, rho_a, 'r--', linewidth=2, label=r'Teórico ($\rho_a$)')
+
+    plt.title('G2: Validação da Densidade de Carga Superficial na Interface')
+    plt.xlabel('Ângulo (graus)')
+    plt.ylabel(r'Densidade de Carga / Salto $D_n$ ($C/m^2$)')
+    plt.xlim(0, 360)
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f'{pasta_destino}/Validação da Densidade de Carga Superficial na Interface.png', dpi=300, bbox_inches='tight')
 
     #VISUALIZAÇÃO DO GRÁFICO DENSIDADE DE CARGA ANALÍTICA
-    plt.figure(figsize=(8, 8))
-    plt.contourf(X, Y, ro_a, levels=50, cmap='inferno')
-    plt.colorbar(label='Densidade de Carga analítica')
-    plt.title('G3: Mapa de Calor - Divergente de D (Analítico)')
-    plt.xlabel('Eixo X (m)')
-    plt.ylabel('Eixo Y (m)')
-    plt.savefig(f'{pasta_destino}/Mapa de Calor - Divergente de D (Analítico).png', dpi=300, bbox_inches='tight')
+    plt.figure(figsize=(10, 5))
+    plt.plot(phi_graus, Et[2], 'g-', linewidth=2, label=r'Salto numérico $\Delta E_t$')
+    plt.title('G3: Continuidade da Componente Tangencial')
+    plt.xlabel('Ângulo (graus)')
+    plt.ylabel(r'Salto do Campo Elétrico %\Delta E_t% (%V/m%)')
+    plt.xlim(0, 360)
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f'{pasta_destino}/Continuidade da Componente Tangencial.png', dpi=300, bbox_inches='tight')
 
     #VISUALIZAÇÃO DO GRÁFICO DE ERRO ABSOLUTO
-    erro_absoluto = np.abs(np.array(ro_n) - np.array(ro_a))
-    plt.figure(figsize=(8, 8))
-    plt.contourf(X, Y, erro_absoluto, levels=50, cmap='inferno')
-    plt.colorbar(label='Erro absoluto')
+    
+    plt.figure(figsize=(10, 3))
+
+    erro_2d = erro_abs[np.newaxis, :]
+    imagem = plt.imshow(erro_2d, aspect='auto', cmap='Reds', extent=[0, 360, 0, 1])
+    plt.yticks([])
+    plt.colorbar(imagem, label=r'Erro Absoluto ($C/m^2$)')
     plt.title('G4: Mapa de Calor - Erro absoluto')
-    plt.xlabel('Eixo X (m)')
-    plt.ylabel('Eixo Y (m)')
-    plt.savefig(f'{pasta_destino}/Mapa de Calor - Erro absoluto.png', dpi=300, bbox_inches='tight')
+    plt.xlabel('Ângulos (Graus)')
+    plt.savefig(f'{pasta_destino}/Mapa de Calor - Erro absoluto_2.png', dpi=300, bbox_inches='tight')
+
+def main():
+    L = [0.01, 0.02, 0.035]
+    n = 300
+    X, Y, reg, phi = Malhas_2D(-L[2], L[2], n, L)
+    p = [0.01, 0.01732]
+    Dx, Dy = Densidade ( X, Y, p, reg)
+    Dn, Dt, Et = cond_fronteira (Dx, Dy, L, phi, n)
+    rho_a = Calculo_analitico (phi, p)
+    plot_graficos(X, Y, phi, L, Dx, Dy, Dn, Dt, Et, rho_a)
+
+main()
