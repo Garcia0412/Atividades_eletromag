@@ -1,6 +1,5 @@
 import streamlit as st
 from pathlib import Path
-from T1_EM_LUCAS_VINICIUS import main
 from T2_EM_LUCAS_VINICIUS import main
 from Header import Header
 
