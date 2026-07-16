@@ -129,6 +129,7 @@ def Calculo_analitico (phi, p):
     y0 = p[1]
     x = c * np.cos(phi)
     y = c * np.sin(phi)
+    cord = [x, y]
 
 
     denominador = (x - x0)**2 + (y - y0)**2
@@ -136,10 +137,10 @@ def Calculo_analitico (phi, p):
     Dy_anomalia = B * (y - y0) / denominador 
     rho_a = 2 * (Dx_anomalia * np.cos(phi) + Dy_anomalia * np.sin(phi))
 
-    return rho_a
+    return rho_a, cord
 
 
-def plot_graficos(X, Y, phi, L, Dx, Dy, Dn, Dt, Et, rho_a):
+def plot_graficos(X, Y, phi, L, Dx, Dy, Dn, Dt, Et, rho_a, cord):
     
     # EXTRAINDO OS DADOS
     erro_abs = np.abs(Dn[2] - rho_a)
@@ -147,6 +148,8 @@ def plot_graficos(X, Y, phi, L, Dx, Dy, Dn, Dt, Et, rho_a):
     a = L[0] 
     c = L[1] 
     b = L[2] 
+    x = cord[0]
+    y = cord[1]
 
     # DEFININDO UM PATH PARA ALOCAR AS IMAGENS DOS GRÁFICOS E CRIANDO A PASTA
     pasta_destino = 'Resultados_Graficos'
@@ -213,14 +216,31 @@ def plot_graficos(X, Y, phi, L, Dx, Dy, Dn, Dt, Et, rho_a):
 
     #VISUALIZAÇÃO DO GRÁFICO DE ERRO ABSOLUTO
     
-    plt.figure(figsize=(10, 3))
+    plt.figure(figsize=(8, 7))
 
-    erro_2d = erro_abs[np.newaxis, :]
-    imagem = plt.imshow(erro_2d, aspect='auto', cmap='Reds', extent=[0, 360, 0, 1])
-    plt.yticks([])
-    plt.colorbar(imagem, label=r'Erro Absoluto ($C/m^2$)')
-    plt.title('G4: Mapa de Calor - Erro absoluto')
-    plt.xlabel('Ângulos (Graus)')
+    # PLOTAGEM DO FUNDO DE ZEROS
+    erro_zero = np.zeros_like(X)
+    R = np.sqrt(X**2 + Y**2)
+    erro_2d_mask = np.ma.masked_where((R < a) | (R > b), erro_zero)
+
+    max_erro = np.max(erro_abs) # Erro no máximo da escala para facilitar a visualização
+    heatmap = plt.pcolormesh(X, Y, erro_2d_mask, cmap='inferno', vmin=0, vmax=max_erro, shading='auto')
+
+    plt.scatter(cord[0], cord[1], c=erro_abs, cmap='inferno', s=80, zorder=5) # Torna o erro visível
+    plt.colorbar(heatmap, label=r'Erro Absoluto Real ($C/m^2$)')
+
+    # LINHA REPRESENTANDO A FRONTEIRA ENTRE AS INTERFACES PARA EVIDENCIAR O PONTO DE FALHA
+    circulo_c = plt.Circle((0, 0), c, color='white', fill=False, linewidth=1.5, linestyle='--', alpha=0.8, zorder=10)
+    plt.gca().add_patch(circulo_c)
+
+    # CONFIGURAÇÕES DO GRÁFICO
+    plt.title('G4: Heatmap do Erro')
+    plt.xlabel('Eixo X (m)') 
+    plt.ylabel('Eixo Y (m)') 
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.xlim(-b*1.1, b*1.1) 
+    plt.ylim(-b*1.1, b*1.1) 
+    plt.grid(True, linestyle=':', alpha=0.4)
     plt.savefig(f'{pasta_destino}/Mapa de Calor - Erro absoluto_2.png', dpi=300, bbox_inches='tight')
 
 def main():
@@ -230,7 +250,7 @@ def main():
     p = [0.01, 0.01732]
     Dx, Dy = Densidade ( X, Y, p, reg)
     Dn, Dt, Et = cond_fronteira (Dx, Dy, L, phi, n)
-    rho_a = Calculo_analitico (phi, p)
-    plot_graficos(X, Y, phi, L, Dx, Dy, Dn, Dt, Et, rho_a)
+    rho_a, cord = Calculo_analitico (phi, p)
+    plot_graficos(X, Y, phi, L, Dx, Dy, Dn, Dt, Et, rho_a, cord)
 
 main()
